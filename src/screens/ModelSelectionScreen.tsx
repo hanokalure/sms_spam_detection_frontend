@@ -215,7 +215,7 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
             transition={{ duration: 0.6, delay: 0.2 }}
             style={{ ...styles.subtitle, fontSize: isDesktop ? 18 : 16 }}
           >
-            Choose from 2 advanced models for real-time spam detection
+            Choose from 4 advanced models for real-time spam detection
           </motion.p>
         </div>
         
