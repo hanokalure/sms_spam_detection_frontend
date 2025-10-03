@@ -130,7 +130,7 @@ const ModelCardComponent: React.FC<ModelCardProps> = ({
             <Text style={[styles.accuracyValue, {
               color: isSelected ? '#ffffff' : '#2d3748'
             }]}>
-              {model.accuracy}%
+              {model.accuracy}
             </Text>
           </View>
           

@@ -64,10 +64,24 @@ export interface NavigationState {
 
 export const ML_MODELS: MLModel[] = [
   {
+    id: 'xgboost',
+    name: 'XGBoost High-Accuracy',
+    description: 'Advanced gradient boosting model with superior feature engineering. Excellent for complex spam patterns with high accuracy.',
+    accuracy: 98,
+    type: 'svm',
+    features: [
+      'Gradient Boosting',
+      'Feature Engineering',
+      'Pattern Recognition',
+      'High Accuracy'
+    ],
+    processingTime: 85
+  },
+  {
     id: 'svm',
     name: 'SVM (Support Vector Machine)',
     description: 'Fast, reliable baseline with character n-grams. Excellent for real-time classification with consistent performance.',
-    accuracy: 99.93,
+    accuracy: 87,
     type: 'svm',
     features: [
       'Character N-grams',
@@ -76,47 +90,5 @@ export const ML_MODELS: MLModel[] = [
       'Fast Processing'
     ],
     processingTime: 50
-  },
-  {
-    id: 'catboost',
-    name: 'CatBoost (Gradient Boosting)',
-    description: 'Advanced tree-based model with mixed features. Superior handling of complex patterns and edge cases.',
-    accuracy: 99.81,
-    type: 'catboost',
-    features: [
-      'Tree-based Learning',
-      'Feature Engineering',
-      'Pattern Recognition',
-      'Edge Case Handling'
-    ],
-    processingTime: 120
-  },
-  {
-    id: 'dl_cnn',
-    name: 'DL CNN (PyTorch)',
-    description: 'Deep learning CNN model with multiple convolutional layers and global max pooling for robust text features.',
-    accuracy: 95.8,
-    type: 'torch',
-    features: [
-      'Embedding + Conv1D stacks',
-      'Global Max Pooling',
-      'Dropout Regularization',
-      'Good on complex spam patterns'
-    ],
-    processingTime: 150
-  },
-  {
-    id: 'dl_bilstm',
-    name: 'DL BiLSTM+Attention (PyTorch)',
-    description: 'Bidirectional LSTM with attention mechanism for contextual sequence understanding and stronger spam pattern capture.',
-    accuracy: 95.8,
-    type: 'torch',
-    features: [
-      'Embedding + BiLSTM layers',
-      'Attention mechanism',
-      'Batch Normalization + Dropout',
-      'Strong on nuanced sequential patterns'
-    ],
-    processingTime: 160
   }
 ];

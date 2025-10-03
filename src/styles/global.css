@@ -1,0 +1,51 @@
+/* Clean and elegant SMS Spam Detection app styles */
+
+/* Gentle floating animation for background elements */
+@keyframes gentleFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-20px) scale(1.05); 
+    opacity: 0.8;
+  }
+}
+
+/* Enhanced glass morphism effects */
+.glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Clean gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.gradient-button {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+/* Subtle card hover effects */
+.model-card {
+  transition: all 0.3s ease;
+}
+
+.model-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+/* Button hover effects */
+.continue-button {
+  transition: all 0.3s ease;
+}
+
+.continue-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
+}

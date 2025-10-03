@@ -262,7 +262,7 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
                 fontSize: isDesktop ? 28 : 22,
                 lineHeight: isDesktop ? 32 : 26
               }]}>
-                SMS Spam Detection Using Machine Learning and Deep Learning
+                SMS Spam Detection
               </Text>
             </View>
             <View style={{ marginBottom: isDesktop ? 16 : 12 }}>
@@ -273,7 +273,7 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
                 fontSize: isDesktop ? 16 : 14,
                 marginTop: 4
               }]}>
-                Using {selectedModel.name} • {selectedModel.accuracy}% accuracy
+                Using {selectedModel.name} • {selectedModel.accuracy} accuracy
               </Text>
             </View>
           </motion.div>

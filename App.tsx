@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { AnimatePresence } from 'framer-motion';
 import { ConnectionProvider } from './src/contexts/ConnectionContext';
+import './src/styles/global.css';
 import { ModelSelectionScreen } from './src/screens/ModelSelectionScreen';
 import { TextInputScreen } from './src/screens/TextInputScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
@@ -67,7 +68,7 @@ export default function App() {
             selectedModel={selectedModel}
             result={result}
             inputText={inputText}
-            onBack={handleBackToInput}
+            onBack={handleBackToModels}
             onNewAnalysis={handleNewAnalysis}
           />
         ) : null;

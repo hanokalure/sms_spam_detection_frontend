@@ -187,7 +187,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 lineHeight: isDesktop ? 32 : 26
               }
             ]}>
-              SMS Spam Detection Using Machine Learning and Deep Learning
+              SMS Spam Detection
             </Text>
           </View>
           <View style={{ marginBottom: isDesktop ? 16 : 12 }}>
@@ -270,132 +270,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
         </View>
 
 
-        {/* Details Toggle */}
-        <View style={[
-          styles.detailsCard,
-          {
-            paddingHorizontal: isMobile ? 16 : 24,
-            paddingVertical: isMobile ? 20 : 24,
-            marginHorizontal: isMobile ? 16 : 0
-          }
-        ]}>
-          <TouchableOpacity
-            onPress={() => setShowDetails(!showDetails)}
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingVertical: 5
-            }}
-          >
-            <Text style={{
-              fontSize: 16,
-              fontWeight: 'bold',
-              color: '#2d3748'
-            }}>
-              Details
-            </Text>
-            <Text style={{
-              fontSize: 18,
-              color: '#667eea',
-              transform: [{ rotate: showDetails ? '180deg' : '0deg' }]
-            }}>
-              ▼
-            </Text>
-          </TouchableOpacity>
-
-          <AnimatePresence>
-            {showDetails && (
-              <motion.div
-                variants={detailsVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                style={{ marginTop: 15 }}
-              >
-                {/* Analyzed Text */}
-                <View style={{
-                  marginBottom: 20,
-                  width: '100%'
-                }}>
-                  <Text style={{
-                    fontSize: 14,
-                    fontWeight: 'bold',
-                    color: '#4a5568',
-                    marginBottom: 8,
-                    textAlign: 'left'
-                  }}>
-                    Analyzed Text:
-                  </Text>
-                  <View style={{
-                    backgroundColor: '#f7fafc',
-                    borderRadius: 8,
-                    borderLeftWidth: 3,
-                    borderLeftColor: isSpam ? '#fc8181' : '#68d391',
-                    padding: isMobile ? 12 : 16,
-                    width: '100%',
-                    maxWidth: '100%'
-                  }}>
-                    <Text style={{
-                      fontSize: isMobile ? 12 : 13,
-                      color: '#4a5568',
-                      lineHeight: isMobile ? 16 : 18,
-                      fontStyle: 'italic',
-                      textAlign: 'left',
-                      flexWrap: 'wrap'
-                    }}>
-                      "{inputText}"
-                    </Text>
-                  </View>
-                </View>
-                
-                {/* Model Info */}
-                <View style={{
-                  marginBottom: 15,
-                  width: '100%'
-                }}>
-                  <Text style={{
-                    fontSize: 14,
-                    fontWeight: 'bold',
-                    color: '#4a5568',
-                    marginBottom: 8,
-                    textAlign: 'left'
-                  }}>
-                    Model Performance:
-                  </Text>
-                  <View style={{ paddingLeft: isMobile ? 8 : 12 }}>
-                    <Text style={{
-                      fontSize: isMobile ? 11 : 12,
-                      color: '#718096',
-                      marginBottom: 4,
-                      lineHeight: isMobile ? 14 : 16
-                    }}>
-                      • Accuracy: {selectedModel.accuracy}%
-                    </Text>
-                    <Text style={{
-                      fontSize: isMobile ? 11 : 12,
-                      color: '#718096',
-                      marginBottom: 4,
-                      lineHeight: isMobile ? 14 : 16
-                    }}>
-                      • Processing Time: {result.processing_time || selectedModel.processingTime}ms
-                    </Text>
-                    <Text style={{
-                      fontSize: isMobile ? 11 : 12,
-                      color: '#718096',
-                      lineHeight: isMobile ? 14 : 16
-                    }}>
-                      • Model Type: {selectedModel.type.toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-
-
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </View>
 
         {/* Action Buttons */}
         <View style={[
@@ -447,7 +321,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             <Text style={{
               color: '#4a5568',
               fontSize: 16
-            }}>← Back to Input</Text>
+            }}>← Back to Model</Text>
           </TouchableOpacity>
         </View>
       </View>
