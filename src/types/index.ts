@@ -3,7 +3,7 @@ export interface MLModel {
   name: string;
   description: string;
   accuracy: number;
-  type: 'svm' | 'catboost';
+  type: 'svm' | 'catboost' | 'torch';
   features: string[];
   processingTime: number; // in milliseconds
 }
@@ -90,5 +90,19 @@ export const ML_MODELS: MLModel[] = [
       'Edge Case Handling'
     ],
     processingTime: 120
+  },
+  {
+    id: 'dl_cnn',
+    name: 'DL CNN (PyTorch)',
+    description: 'Deep learning CNN model with multiple convolutional layers and global max pooling for robust text features.',
+    accuracy: 95.8,
+    type: 'torch',
+    features: [
+      'Embedding + Conv1D stacks',
+      'Global Max Pooling',
+      'Dropout Regularization',
+      'Good on complex spam patterns'
+    ],
+    processingTime: 150
   }
 ];
