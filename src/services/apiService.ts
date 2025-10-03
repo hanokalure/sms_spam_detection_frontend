@@ -4,8 +4,9 @@ class ApiService {
   private baseUrl: string;
 
   constructor() {
-    // FastAPI backend URL (no /api suffix needed)
-    this.baseUrl = 'http://localhost:8000';
+    // Use environment variable for backend URL, fallback to localhost for development
+    this.baseUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    console.log('🔧 API Service initialized with baseUrl:', this.baseUrl);
   }
 
   setBaseUrl(url: string): void {
@@ -68,7 +69,14 @@ class ApiService {
 
   async healthCheck(): Promise<{isHealthy: boolean, message?: string}> {
     try {
-      const response = await fetch(`${this.baseUrl}/health`);
+      const response = await fetch(`${this.baseUrl}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout for faster failure on mobile
+        signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
+      });
       if (response.ok) {
         return { isHealthy: true };
       } else {
@@ -76,7 +84,11 @@ class ApiService {
       }
     } catch (error) {
       console.error('Health check failed:', error);
-      return { isHealthy: false, message: 'Cannot connect to server' };
+      // Check if this is a CORS or network error (common on mobile/deployed apps)
+      const errorMessage = error.name === 'TypeError' 
+        ? 'Network error - backend not accessible'
+        : 'Cannot connect to server';
+      return { isHealthy: false, message: errorMessage };
     }
   }
 
