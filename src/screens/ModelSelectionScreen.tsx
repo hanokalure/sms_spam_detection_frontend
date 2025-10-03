@@ -5,6 +5,22 @@ import SpamLoadingSpinner from '../components/SpamLoadingSpinner';
 import apiService from '../services/apiService';
 import { MLModel } from '../types';
 
+// Sample messages for typing animation
+const DEMO_MESSAGES = {
+  spam: [
+    "CONGRATULATIONS! You've won $1000! Click here to claim your prize NOW!",
+    "URGENT: Your account will be suspended. Call 1-800-SCAM-NOW immediately!",
+    "FREE iPhone 15! Limited time offer. Reply YES to claim your free gift!",
+    "You have been selected for a cash prize of $5000. Text WINNER to 12345"
+  ],
+  ham: [
+    "Hey, are we still meeting for lunch at 2pm? Let me know if you need to reschedule.",
+    "Thanks for the great presentation today. The client was really impressed!",
+    "Don't forget to pick up milk on your way home. See you tonight!",
+    "Your package has been delivered. Thank you for choosing our service."
+  ]
+};
+
 interface ModelSelectionScreenProps {
   onModelSelect: (model: MLModel) => void;
   selectedModel: MLModel | null;
@@ -18,6 +34,13 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
   const [models, setModels] = useState<any[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [screenData, setScreenData] = useState({ width: window.innerWidth, height: window.innerHeight });
+  
+  // Typing animation states
+  const [currentText, setCurrentText] = useState('');
+  const [currentMessageType, setCurrentMessageType] = useState<'spam' | 'ham'>('spam');
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
+  const [showResult, setShowResult] = useState(false);
   
   useEffect(() => {
     const handleResize = () => {
@@ -34,6 +57,37 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
       loadModels();
     }
   }, [isConnected]);
+
+  // Typing animation effect
+  useEffect(() => {
+    const messages = DEMO_MESSAGES[currentMessageType];
+    const targetMessage = messages[currentMessageIndex];
+    
+    if (isTyping && currentText.length < targetMessage.length) {
+      const timeout = setTimeout(() => {
+        setCurrentText(targetMessage.slice(0, currentText.length + 1));
+      }, 50 + Math.random() * 100); // Variable typing speed
+      return () => clearTimeout(timeout);
+    } else if (isTyping && currentText.length === targetMessage.length) {
+      // Show result for 2 seconds
+      setShowResult(true);
+      const timeout = setTimeout(() => {
+        setShowResult(false);
+        setIsTyping(false);
+        // Clear text and move to next message
+        const clearTimeout = setTimeout(() => {
+          setCurrentText('');
+          setCurrentMessageType(currentMessageType === 'spam' ? 'ham' : 'spam');
+          setCurrentMessageIndex((prev) => 
+            (prev + 1) % DEMO_MESSAGES[currentMessageType === 'spam' ? 'ham' : 'spam'].length
+          );
+          setIsTyping(true);
+        }, 1000);
+        return () => clearTimeout(clearTimeout);
+      }, 2500);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentText, isTyping, currentMessageType, currentMessageIndex]);
 
   const loadModels = async () => {
     setLoadingModels(true);
@@ -120,11 +174,15 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
 
   return (
     <div style={styles.container}>
-      {/* Subtle Background Pattern */}
+      {/* Enhanced Animated Background */}
       <div style={styles.backgroundPattern}>
         <div style={styles.patternCircle1}></div>
         <div style={styles.patternCircle2}></div>
         <div style={styles.patternCircle3}></div>
+        <div style={styles.patternCircle4}></div>
+        <div style={styles.patternCircle5}></div>
+        <div style={styles.floatingElement1}></div>
+        <div style={styles.floatingElement2}></div>
       </div>
       
       <div style={styles.contentContainer}>
@@ -147,7 +205,7 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
               fontSize: isDesktop ? 32 : 24,
               lineHeight: isDesktop ? '38px' : '28px'
             }}>
-              SMS Spam Detection
+              SMS Spam Detection Using Machine Learning and Deep Learning
             </h1>
           </motion.div>
           
@@ -157,9 +215,116 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
             transition={{ duration: 0.6, delay: 0.2 }}
             style={{ ...styles.subtitle, fontSize: isDesktop ? 18 : 16 }}
           >
-            Select the model for spam detection
+            Choose from 2 advanced models for real-time spam detection
           </motion.p>
         </div>
+        
+        {/* Live Typing Demo */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          style={{
+            ...styles.liveDemoSection,
+            marginBottom: isDesktop ? 50 : 35,
+            paddingLeft: isDesktop ? 20 : 15,
+            paddingRight: isDesktop ? 20 : 15,
+          }}
+        >
+          <div style={{
+            ...styles.liveDemoContainer,
+            padding: isDesktop ? '40px' : '30px 20px',
+          }}>
+            <div style={styles.demoInputContainer}>
+              {/* Message Type Badge */}
+              <motion.div
+                key={currentMessageType}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  ...styles.messageTypeBadge,
+                  backgroundColor: currentMessageType === 'spam' ? '#fee2e2' : '#ecfdf5',
+                  color: currentMessageType === 'spam' ? '#dc2626' : '#059669',
+                  border: `2px solid ${currentMessageType === 'spam' ? '#fca5a5' : '#86efac'}`,
+                  fontSize: isDesktop ? 14 : 13,
+                  padding: isDesktop ? '8px 20px' : '6px 16px',
+                  minWidth: isDesktop ? 150 : 130,
+                }}
+              >
+                {currentMessageType === 'spam' ? '🚀 Testing SPAM' : '💬 Testing HAM'}
+              </motion.div>
+              
+              {/* Typing Input Box */}
+              <div style={{
+                ...styles.demoInputBox,
+                borderColor: currentMessageType === 'spam' ? '#f87171' : '#4ade80',
+                padding: isDesktop ? '20px 24px' : '16px 20px',
+                minHeight: isDesktop ? 80 : 70,
+              }}>
+                <div style={{
+                  ...styles.demoInputText,
+                  fontSize: isDesktop ? 16 : 15,
+                  lineHeight: isDesktop ? '24px' : '22px',
+                }}>
+                  {currentText}
+                  <span style={{
+                    ...styles.cursor,
+                    opacity: isTyping ? 1 : 0
+                  }}>|</span>
+                </div>
+              </div>
+              
+              {/* Live Result */}
+              {showResult && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.4 }}
+                  style={{
+                    ...styles.liveResult,
+                    backgroundColor: currentMessageType === 'spam' ? '#fee2e2' : '#ecfdf5',
+                    borderColor: currentMessageType === 'spam' ? '#f87171' : '#4ade80',
+                    padding: isDesktop ? '16px 24px' : '14px 20px',
+                    gap: isDesktop ? 15 : 12,
+                  }}
+                >
+                  <div style={styles.resultIcon}>
+                    {currentMessageType === 'spam' ? '🚨' : '✅'}
+                  </div>
+                  <div>
+                    <div style={{
+                      ...styles.resultText,
+                      color: currentMessageType === 'spam' ? '#dc2626' : '#059669'
+                    }}>
+                      {currentMessageType === 'spam' ? 'SPAM DETECTED' : 'LEGITIMATE MESSAGE'}
+                    </div>
+                    <div style={styles.resultConfidence}>
+                      Confidence: {currentMessageType === 'spam' ? '94%' : '92%'}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Model Selection Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          style={{
+            textAlign: 'center',
+            marginBottom: isDesktop ? 30 : 25,
+            paddingLeft: isDesktop ? 20 : 15,
+            paddingRight: isDesktop ? 20 : 15,
+          }}
+        >
+          <h2 style={styles.modelSectionTitle}>Select Your AI Model</h2>
+          <p style={styles.modelSectionSubtitle}>Choose the detection engine that best fits your needs</p>
+        </motion.div>
 
         {/* Model Cards */}
         <motion.div 
@@ -345,12 +510,18 @@ const styles = {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
     overflow: 'auto',
+    overflowX: 'hidden',
     position: 'relative',
+    width: '100%',
+    maxWidth: '100vw',
   } as React.CSSProperties,
   contentContainer: {
     display: 'flex',
     flexDirection: 'column',
     minHeight: '100vh',
+    width: '100%',
+    maxWidth: '100vw',
+    boxSizing: 'border-box',
   } as React.CSSProperties,
   header: {
     display: 'flex',
@@ -530,5 +701,167 @@ const styles = {
     borderRadius: '50%',
     background: 'radial-gradient(circle, rgba(139, 92, 246, 0.02) 0%, transparent 70%)',
     animation: 'gentleFloat 30s ease-in-out infinite',
+  } as React.CSSProperties,
+  
+  patternCircle4: {
+    position: 'absolute',
+    bottom: '10%',
+    right: '30%',
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(34, 197, 94, 0.03) 0%, transparent 70%)',
+    animation: 'gentleFloat 18s ease-in-out infinite',
+  } as React.CSSProperties,
+  
+  patternCircle5: {
+    position: 'absolute',
+    top: '30%',
+    left: '5%',
+    width: '80px',
+    height: '80px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(168, 85, 247, 0.04) 0%, transparent 70%)',
+    animation: 'gentleFloat 22s ease-in-out infinite reverse',
+  } as React.CSSProperties,
+  
+  floatingElement1: {
+    position: 'absolute',
+    top: '20%',
+    right: '10%',
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(59, 130, 246, 0.4)',
+    animation: 'gentleFloat 15s ease-in-out infinite',
+  } as React.CSSProperties,
+  
+  floatingElement2: {
+    position: 'absolute',
+    bottom: '40%',
+    left: '15%',
+    width: '4px',
+    height: '4px',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(168, 85, 247, 0.4)',
+    animation: 'gentleFloat 12s ease-in-out infinite reverse',
+  } as React.CSSProperties,
+  
+  // Live Demo Section
+  liveDemoSection: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: '100vw',
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+  
+  liveDemoContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backdropFilter: 'blur(25px)',
+    borderRadius: 20,
+    padding: '30px 20px',
+    maxWidth: 700,
+    width: '100%',
+    margin: '0 auto',
+    border: '1px solid rgba(255, 255, 255, 0.6)',
+    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1)',
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+  
+  
+  demoInputContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
+    alignItems: 'center',
+  } as React.CSSProperties,
+  
+  messageTypeBadge: {
+    padding: '8px 20px',
+    borderRadius: 25,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    minWidth: 150,
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+  
+  demoInputBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: '16px 20px',
+    width: '100%',
+    maxWidth: 600,
+    border: '3px solid',
+    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+    minHeight: 80,
+    display: 'flex',
+    alignItems: 'center',
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+  
+  demoInputText: {
+    fontSize: 16,
+    lineHeight: '24px',
+    color: '#1f2937',
+    width: '100%',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    wordWrap: 'break-word',
+    wordBreak: 'break-word',
+  } as React.CSSProperties,
+  
+  cursor: {
+    display: 'inline-block',
+    width: '2px',
+    marginLeft: '2px',
+    color: '#3b82f6',
+    animation: 'blink 1s infinite',
+  } as React.CSSProperties,
+  
+  liveResult: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 15,
+    padding: '16px 20px',
+    borderRadius: 16,
+    border: '2px solid',
+    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+    maxWidth: 400,
+    width: '100%',
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+  
+  resultIcon: {
+    fontSize: 24,
+    flexShrink: 0,
+  } as React.CSSProperties,
+  
+  resultText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  } as React.CSSProperties,
+  
+  resultConfidence: {
+    fontSize: 14,
+    color: '#6b7280',
+    margin: 0,
+  } as React.CSSProperties,
+  
+  // Model Selection Section Header
+  modelSectionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 8,
+    margin: '0 0 8px 0',
+  } as React.CSSProperties,
+  
+  modelSectionSubtitle: {
+    fontSize: 16,
+    color: '#64748b',
+    margin: 0,
   } as React.CSSProperties,
 };

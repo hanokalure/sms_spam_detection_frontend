@@ -49,3 +49,58 @@
   transform: translateY(-1px);
   box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
 }
+
+/* Blinking cursor animation for live demo */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Enhanced floating animations */
+@keyframes dataFlow {
+  0% { transform: translateX(-100px) translateY(0px) opacity(0); }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100vw) translateY(-20px) opacity(0); }
+}
+
+/* Mobile-specific responsive styles */
+@media (max-width: 768px) {
+  body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Ensure all containers are properly contained */
+  .container, .content-container {
+    width: 100%;
+    max-width: 100vw;
+    padding: 0 15px;
+    box-sizing: border-box;
+  }
+  
+  /* Text wrapping */
+  .demo-text, .input-text {
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  /* Responsive demo container */
+  .live-demo-container {
+    padding: 20px 15px !important;
+    margin: 0 10px;
+  }
+  
+  /* Responsive buttons and inputs */
+  .demo-input-box {
+    padding: 15px !important;
+    margin: 0 5px;
+  }
+}

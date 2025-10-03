@@ -262,7 +262,7 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
                 fontSize: isDesktop ? 28 : 22,
                 lineHeight: isDesktop ? 32 : 26
               }]}>
-                SMS Spam Detection
+                
               </Text>
             </View>
             <View style={{ marginBottom: isDesktop ? 16 : 12 }}>
