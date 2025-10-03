@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "SMS Spam Detection ML",
+    "slug": "sms-spam-detector",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "description": "AI-powered SMS spam detection using Machine Learning and Deep Learning with SVM and CatBoost models",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#667eea"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/logo.png"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#667eea"
+      },
+      "icon": "./assets/logo.png",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/logo.png",
+      "name": "SMS Spam Detection ML",
+      "shortName": "SMS Detector",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#667eea",
+      "backgroundColor": "#f7fafc",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait"
+    }
+  }
+}
