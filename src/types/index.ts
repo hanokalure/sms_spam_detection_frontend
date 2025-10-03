@@ -104,5 +104,19 @@ export const ML_MODELS: MLModel[] = [
       'Good on complex spam patterns'
     ],
     processingTime: 150
+  },
+  {
+    id: 'dl_bilstm',
+    name: 'DL BiLSTM+Attention (PyTorch)',
+    description: 'Bidirectional LSTM with attention mechanism for contextual sequence understanding and stronger spam pattern capture.',
+    accuracy: 95.8,
+    type: 'torch',
+    features: [
+      'Embedding + BiLSTM layers',
+      'Attention mechanism',
+      'Batch Normalization + Dropout',
+      'Strong on nuanced sequential patterns'
+    ],
+    processingTime: 160
   }
 ];

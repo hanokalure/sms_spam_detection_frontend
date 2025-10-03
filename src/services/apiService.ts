@@ -32,38 +32,55 @@ class ApiService {
 
       // FastAPI returns the prediction result directly
       const data = await response.json();
+      console.log('📡 API Response received:', data);
       
       // Map FastAPI response format to frontend format
-      return {
+      const processing_time = request.model === 'svm' 
+        ? 50 
+        : request.model === 'catboost' 
+          ? 120 
+          : request.model === 'dl_cnn' 
+            ? 150 
+            : request.model === 'dl_bilstm' 
+              ? 160 
+              : 120;
+
+      const result = {
         prediction: data.prediction.toLowerCase() as 'spam' | 'ham', // Convert SPAM/HAM to spam/ham
         confidence: data.confidence,
         processed_text: data.processed_text,
         features_detected: this.extractFeaturesFromText(request.text),
-        processing_time: data.model_name === 'SVM' ? 50 : 120
+        processing_time
       };
+      
+      console.log('✅ Mapped prediction result:', result);
+      return result;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('❌ API Error in predict method:', error);
+      console.error('Request details:', { text: request.text, model: request.model });
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
       
-      // Return mock data for development/testing
-      if (process.env.NODE_ENV === 'development') {
-        return this.getMockPrediction(request);
-      }
-      
+      // Don't return mock data, let the error bubble up so we can see what's wrong
       throw error;
     }
   }
 
-  async healthCheck(): Promise<boolean> {
+  async healthCheck(): Promise<{isHealthy: boolean, message?: string}> {
     try {
       const response = await fetch(`${this.baseUrl}/health`);
-      return response.ok;
+      if (response.ok) {
+        return { isHealthy: true };
+      } else {
+        return { isHealthy: false, message: `Server returned ${response.status}` };
+      }
     } catch (error) {
       console.error('Health check failed:', error);
-      return false;
+      return { isHealthy: false, message: 'Cannot connect to server' };
     }
   }
 
-  async getAvailableModels(): Promise<any> {
+  async getAvailableModels(): Promise<{success: boolean, data?: any, error?: string}> {
     try {
       const response = await fetch(`${this.baseUrl}/models`);
       
@@ -71,10 +88,11 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      return { success: true, data };
     } catch (error) {
       console.error('Models info error:', error);
-      return null;
+      return { success: false, error: error.message || 'Failed to fetch models' };
     }
   }
 
@@ -115,7 +133,17 @@ class ApiService {
 
     const confidence = Math.random() * 0.3 + (isSpam ? 0.7 : 0.4);
 
-    return {
+      const processing_time = request.model === 'svm' 
+        ? 50 
+        : request.model === 'catboost' 
+          ? 120 
+          : request.model === 'dl_cnn' 
+            ? 150 
+            : request.model === 'dl_bilstm' 
+              ? 160 
+              : 120;
+
+      return {
       prediction: isSpam ? 'spam' : 'ham',
       confidence: Math.min(confidence, 0.999),
       processed_text: request.text.toLowerCase().replace(/[^a-z0-9\s]/g, ''),
@@ -129,7 +157,7 @@ class ApiService {
           word => request.text.toLowerCase().includes(word)
         ).length
       },
-      processing_time: request.model === 'svm' ? 50 : 120
+      processing_time
     };
   }
 

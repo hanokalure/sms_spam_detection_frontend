@@ -1,9 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { motion, AnimatePresence } from 'framer-motion';
-import Particles from '@tsparticles/react';
-import { loadSlim } from '@tsparticles/slim';
-import { getBackgroundParticles } from '../animations/particles';
+import { useConnection } from '../contexts/ConnectionContext';
+import SpamLoadingSpinner from '../components/SpamLoadingSpinner';
 import { MLModel, PredictionResult } from '../types';
 import apiService from '../services/apiService';
 
@@ -18,11 +17,11 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
   onBack,
   onResult
 }) => {
+  const { isConnected, isChecking, error: connectionError, retryConnection } = useConnection();
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showExamples, setShowExamples] = useState(false);
-  const [particlesLoaded, setParticlesLoaded] = useState(false);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const textInputRef = useRef<TextInput>(null);
   
@@ -33,11 +32,6 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
     
     const subscription = Dimensions.addEventListener('change', onChange);
     return () => subscription?.remove();
-  }, []);
-
-  const particlesInit = useCallback(async (engine: any) => {
-    await loadSlim(engine);
-    setParticlesLoaded(true);
   }, []);
   const exampleTexts = {
     spam: [
@@ -55,6 +49,12 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Check connection first
+    if (!isConnected) {
+      setError('No server connection. Please check if backend is running.');
+      return;
+    }
+
     if (!inputText.trim()) {
       setError('Please enter some text to analyze');
       return;
@@ -74,14 +74,18 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
         model: selectedModel.id
       });
 
+      // apiService.predict returns PredictionResult directly
+      console.log('📝 Received prediction result:', result);
+      
       // Simulate processing time for better UX
       setTimeout(() => {
         onResult(result, inputText.trim());
         setIsLoading(false);
-      }, selectedModel.processingTime);
+      }, Math.min(selectedModel.processingTime || 100, 2000));
 
     } catch (err) {
-      setError('Failed to analyze text. Please try again.');
+      console.error('❌ Prediction error:', err);
+      setError(`Failed to analyze text: ${err.message || 'Please try again.'}`);
       setIsLoading(false);
     }
   };
@@ -185,6 +189,49 @@ export const TextInputScreen: React.FC<TextInputScreenProps> = ({
   };
 
   const isDesktop = screenData.width > 768;
+
+  // Show connection error if not connected
+  if (!isConnected) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <motion.View
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            style={styles.errorContent}
+          >
+            <Text style={styles.errorIcon}>⚠️</Text>
+            <Text style={styles.errorTitle}>Connection Lost</Text>
+            <Text style={styles.errorMessage}>
+              {connectionError || "Lost connection to server during text input."}
+            </Text>
+            
+            <motion.View
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={retryConnection}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.retryButtonText}>🔄 Retry Connection</Text>
+              </TouchableOpacity>
+            </motion.View>
+            
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={onBack}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.backButtonText}>← Go Back</Text>
+            </TouchableOpacity>
+          </motion.View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -482,6 +529,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7fafc'
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorContent: {
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    maxWidth: 400,
+    width: '100%',
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 20,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#718096',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  retryButton: {
+    backgroundColor: '#667eea',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginBottom: 15,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  backButton: {
+    backgroundColor: '#e2e8f0',
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  backButtonText: {
+    color: '#4a5568',
+    fontWeight: '500',
+    fontSize: 14,
   },
   contentContainer: {
     minHeight: '100%'

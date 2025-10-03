@@ -1,11 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { motion } from 'framer-motion';
-import Particles from '@tsparticles/react';
-import { loadSlim } from '@tsparticles/slim';
-import { ModelCard } from '../components/ModelCard';
-import { getBackgroundParticles, clickParticles } from '../animations/particles';
-import { MLModel, ML_MODELS } from '../types';
+import { useConnection } from '../contexts/ConnectionContext';
+import SpamLoadingSpinner from '../components/SpamLoadingSpinner';
+import apiService from '../services/apiService';
+import { MLModel } from '../types';
 
 interface ModelSelectionScreenProps {
   onModelSelect: (model: MLModel) => void;
@@ -16,317 +14,442 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
   onModelSelect,
   selectedModel
 }) => {
-  const [particlesLoaded, setParticlesLoaded] = useState(false);
-  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const { isConnected, isChecking, error, retryConnection } = useConnection();
+  const [models, setModels] = useState<any[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [screenData, setScreenData] = useState({ width: window.innerWidth, height: window.innerHeight });
   
   useEffect(() => {
-    const onChange = (result: any) => {
-      setScreenData(result.window);
+    const handleResize = () => {
+      setScreenData({ width: window.innerWidth, height: window.innerHeight });
     };
     
-    const subscription = Dimensions.addEventListener('change', onChange);
-    return () => subscription?.remove();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const particlesInit = useCallback(async (engine: any) => {
-    await loadSlim(engine);
-    setParticlesLoaded(true);
-  }, []);
+  // Load models when connected
+  useEffect(() => {
+    if (isConnected) {
+      loadModels();
+    }
+  }, [isConnected]);
 
-  const titleVariants = {
-    hidden: { opacity: 0, y: -50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: [0.6, -0.05, 0.01, 0.99]
+  const loadModels = async () => {
+    setLoadingModels(true);
+    try {
+      const result = await apiService.getAvailableModels();
+      if (result.success && result.data) {
+        const modelData = Object.entries(result.data.available_models).map(([key, model]: [string, any]) => ({
+          id: key,
+          name: model.name,
+          accuracy: model.accuracy,
+          description: model.training_focus || 'Advanced spam detection',
+          processingTime: getProcessingTimeForModel(model.name)
+        }));
+        setModels(modelData);
       }
+    } catch (error) {
+      console.error('Failed to load models:', error);
+    } finally {
+      setLoadingModels(false);
     }
   };
 
-  const subtitleVariants = {
-    hidden: { opacity: 0, y: -30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        delay: 0.3,
-        ease: 'easeOut'
-      }
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.5
-      }
-    }
-  };
-
-  const continueButtonVariants = {
-    hidden: { opacity: 0, y: 50, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.5,
-        delay: 1.0,
-        ease: 'easeOut'
-      }
-    },
-    hover: {
-      scale: 1.05,
-      boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)',
-      transition: {
-        duration: 0.2
-      }
-    },
-    tap: {
-      scale: 0.95,
-      transition: {
-        duration: 0.1
-      }
-    }
+  const getProcessingTimeForModel = (modelName: string): number => {
+    if (modelName.includes('SVM')) return 45;
+    if (modelName.includes('CatBoost')) return 85;
+    if (modelName.includes('CNN')) return 150;
+    if (modelName.includes('BiLSTM')) return 200;
+    return 100;
   };
 
   const isDesktop = screenData.width > 768;
 
-  return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Background Particles - Temporarily disabled */}
-      <View style={styles.particlesContainer}>
-        {/* Particles temporarily disabled for debugging */}
-      </View>
+  // Show loading spinner while checking connection or loading models
+  if (isChecking || loadingModels) {
+    return (
+      <div style={styles.loadingContainer}>
+        <SpamLoadingSpinner 
+          message={isChecking ? "Connecting to server..." : "Loading AI models..."} 
+          size="large" 
+        />
+      </div>
+    );
+  }
 
-      {/* Content */}
-      <View style={[styles.content, { padding: isDesktop ? 20 : 15 }]}>
-        
+  // Show error state if not connected
+  if (!isConnected) {
+    return (
+      <div style={styles.errorContainer}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          style={styles.errorContent}
+        >
+          <span style={styles.errorIcon}>⚠️</span>
+          <h2 style={styles.errorTitle}>Connection Required</h2>
+          <p style={styles.errorMessage}>
+            {error || "Cannot connect to server. Please ensure the backend is running."}
+          </p>
+          
+          <motion.button
+            style={styles.retryButton}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={retryConnection}
+          >
+            <span style={styles.retryButtonText}>🔄 Retry Connection</span>
+          </motion.button>
+          
+          <p style={styles.helpText}>
+            💡 Start the backend server
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.contentContainer}>
         {/* Header */}
-        <View style={[styles.header, { 
+        <div style={{
+          ...styles.header,
           marginTop: isDesktop ? 40 : 20,
           marginBottom: isDesktop ? 40 : 30,
-          paddingHorizontal: isDesktop ? 20 : 15
-        }]}>
-          <View style={styles.titleContainer}>
-            <Text style={[styles.mainTitle, {
+          paddingLeft: isDesktop ? 20 : 15,
+          paddingRight: isDesktop ? 20 : 15,
+        }}>
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            style={styles.titleContainer}
+          >
+            <h1 style={{
+              ...styles.mainTitle,
               fontSize: isDesktop ? 32 : 24,
-              lineHeight: isDesktop ? 38 : 28
-            }]}>
+              lineHeight: isDesktop ? '38px' : '28px'
+            }}>
               SMS Spam Detection Using Machine Learning and Deep Learning
-            </Text>
-          </View>
+            </h1>
+          </motion.div>
           
-          <Text style={[styles.subtitle, { fontSize: isDesktop ? 18 : 16 }]}>
-            Select the machine learning model that best fits your needs
-          </Text>
-        </View>
+          <motion.p 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            style={{ ...styles.subtitle, fontSize: isDesktop ? 18 : 16 }}
+          >
+            Choose your AI model for spam detection
+          </motion.p>
+        </div>
 
         {/* Model Cards */}
-        <View style={[styles.cardsContainer, {
-          flexDirection: isDesktop ? 'row' : 'column',
-          paddingHorizontal: isDesktop ? 0 : 10
-        }]}>
-          {ML_MODELS.map((model, index) => (
-            <View
+        <motion.div 
+          style={{
+            ...styles.cardsContainer,
+            flexDirection: isDesktop ? 'row' : 'column',
+            paddingLeft: isDesktop ? 20 : 15,
+            paddingRight: isDesktop ? 20 : 15,
+            gap: 15
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          {models.map((model, index) => (
+            <motion.div
               key={model.id}
-              style={{ flex: isDesktop ? 1 : undefined, maxWidth: isDesktop ? 400 : '100%' }}
+              style={styles.modelCardContainer}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <ModelCard
-                model={model}
-                isSelected={selectedModel?.id === model.id}
-                onSelect={onModelSelect}
-                index={index}
-              />
-            </View>
+              <motion.button
+                style={{
+                  ...styles.modelCard,
+                  ...(selectedModel?.id === model.id ? styles.selectedCard : {})
+                }}
+                onClick={() => {
+                  const mlModel: MLModel = {
+                    id: model.id,
+                    name: model.name,
+                    accuracy: model.accuracy,
+                    description: model.description,
+                    features: [],
+                    processingTime: model.processingTime
+                  };
+                  onModelSelect(mlModel);
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {/* Model Icon */}
+                <div style={styles.modelIconContainer}>
+                  <span style={styles.modelIcon}>
+                    {model.name.includes('SVM') ? '⚡' : 
+                     model.name.includes('CatBoost') ? '🧠' :
+                     model.name.includes('CNN') ? '🔬' : '🎯'}
+                  </span>
+                </div>
+                
+                {/* Model Info */}
+                <div style={styles.modelName}>{model.name}</div>
+                <div style={styles.modelAccuracy}>{model.accuracy}% Accuracy</div>
+                <div style={styles.processingTime}>~{model.processingTime}ms avg processing</div>
+                
+                {/* Selection Indicator */}
+                {selectedModel?.id === model.id && (
+                  <motion.div
+                    style={styles.selectionIndicator}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span style={styles.checkIcon}>✓</span>
+                  </motion.div>
+                )}
+              </motion.button>
+            </motion.div>
           ))}
-        </View>
+        </motion.div>
 
         {/* Continue Button */}
         {selectedModel && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.continueButton, { width: isDesktop ? 200 : '100%' }]}
-              onPress={() => {
+          <motion.div
+            style={styles.buttonContainer}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <motion.button
+              style={{ ...styles.continueButton, width: isDesktop ? 200 : '90%' }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
                 if (selectedModel) {
                   onModelSelect(selectedModel);
                 }
               }}
-              activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>Continue</Text>
-              <Text style={styles.buttonIcon}>→</Text>
-            </TouchableOpacity>
-          </View>
+              <span style={styles.buttonText}>Continue</span>
+              <span style={styles.buttonIcon}>→</span>
+            </motion.button>
+          </motion.div>
         )}
-
-        {/* Model Comparison */}
-        <View style={[styles.comparisonContainer, {
-          padding: isDesktop ? 20 : 15,
-          marginHorizontal: isDesktop ? 0 : 10,
-          marginBottom: 30
-        }]}>
-          <Text style={styles.comparisonTitle}>Quick Comparison</Text>
-          
-          <View style={[styles.comparisonGrid, {
-            flexDirection: isDesktop ? 'row' : 'column'
-          }]}>
-            <View style={styles.comparisonItem}>
-              <Text style={styles.comparisonModelTitle}>SVM Model</Text>
-              <Text style={styles.comparisonModelDesc}>
-                ⚡ Fastest processing • 🎯 Highest accuracy • 📊 Real-time ready
-              </Text>
-            </View>
-            
-            <View style={[styles.comparisonItem, { marginTop: isDesktop ? 0 : 15 }]}>
-              <Text style={styles.comparisonModelTitle}>CatBoost Model</Text>
-              <Text style={styles.comparisonModelDesc}>
-                🧠 Advanced learning • 🔍 Pattern detection • 🛡️ Edge case handling
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
+      </div>
+    </div>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f7fafc'
-  },
-  contentContainer: {
-    minHeight: '100%'
-  },
-  particlesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1
-  },
-  particles: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%'
-  },
-  content: {
-    position: 'relative',
-    zIndex: 2,
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start'
-  },
-  header: {
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 800
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  mainTitle: {
-    fontWeight: 'bold',
-    textAlign: 'center',
-    // Using color instead of gradient since gradient text doesn't work well in RN
-    color: '#667eea'
-  },
-  subtitle: {
-    color: '#4a5568',
-    textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 600,
-    paddingHorizontal: 20
-  },
-  cardsContainer: {
-    width: '100%',
-    maxWidth: 900,
-    alignItems: 'center',
+const styles = {
+  // Loading and Error States
+  loadingContainer: {
+    display: 'flex',
+    minHeight: '100vh',
     justifyContent: 'center',
-    gap: 20,
-    marginBottom: 30
-  },
-  buttonContainer: {
-    width: '100%',
+    alignItems: 'center',
+    backgroundColor: '#f7fafc',
+  } as React.CSSProperties,
+  errorContainer: {
+    display: 'flex',
+    minHeight: '100vh',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f7fafc',
+    padding: 20,
+  } as React.CSSProperties,
+  errorContent: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 40,
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
     maxWidth: 400,
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginVertical: 20
-  },
-  continueButton: {
-    backgroundColor: '#667eea',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 8
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 8
-  },
-  buttonIcon: {
-    color: '#ffffff',
-    fontSize: 20
-  },
-  comparisonContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 15,
     width: '100%',
-    maxWidth: 600,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 25,
-    elevation: 5
-  },
-  comparisonTitle: {
+  } as React.CSSProperties,
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 20,
+  } as React.CSSProperties,
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    marginBottom: 15,
+    textAlign: 'center',
+    margin: '0 0 15px 0',
+  } as React.CSSProperties,
+  errorMessage: {
     fontSize: 16,
+    color: '#718096',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: '22px',
+    margin: '0 0 25px 0',
+  } as React.CSSProperties,
+  retryButton: {
+    backgroundColor: '#667eea',
+    padding: '12px 30px',
+    borderRadius: 25,
+    marginBottom: 20,
+    border: 'none',
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 600,
+    fontSize: 16,
+  } as React.CSSProperties,
+  helpText: {
+    fontSize: 14,
+    color: '#a0aec0',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    margin: 0,
+  } as React.CSSProperties,
+  
+  // Main UI
+  container: {
+    minHeight: '100vh',
+    backgroundColor: '#f7fafc',
+    overflow: 'auto',
+  } as React.CSSProperties,
+  contentContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
+  } as React.CSSProperties,
+  header: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 20,
+  } as React.CSSProperties,
+  titleContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 15,
+  } as React.CSSProperties,
+  mainTitle: {
     fontWeight: 'bold',
     color: '#2d3748',
     textAlign: 'center',
-    marginBottom: 12
-  },
-  comparisonGrid: {
-    justifyContent: 'space-between'
-  },
-  comparisonItem: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  comparisonModelTitle: {
-    fontWeight: 'bold',
-    color: '#4c51bf',
-    fontSize: 14,
-    marginBottom: 4
-  },
-  comparisonModelDesc: {
-    color: '#4a5568',
-    fontSize: 12,
+    letterSpacing: '-0.5px',
+    margin: 0,
+  } as React.CSSProperties,
+  subtitle: {
+    color: '#718096',
     textAlign: 'center',
-    lineHeight: 18
-  }
-});
+    fontWeight: 500,
+    letterSpacing: '0.3px',
+    margin: 0,
+  } as React.CSSProperties,
+  cardsContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    marginBottom: 30,
+  } as React.CSSProperties,
+  modelCardContainer: {
+    flex: 1,
+    minHeight: 180,
+    maxWidth: 250,
+    alignSelf: 'center',
+    margin: 8,
+  } as React.CSSProperties,
+  modelCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    border: '2px solid transparent',
+    position: 'relative',
+    height: 180,
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  selectedCard: {
+    borderColor: '#667eea',
+    backgroundColor: '#f8faff',
+  } as React.CSSProperties,
+  modelIconContainer: {
+    marginBottom: 12,
+  } as React.CSSProperties,
+  modelIcon: {
+    fontSize: 32,
+  } as React.CSSProperties,
+  modelName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    textAlign: 'center',
+    marginBottom: 8,
+  } as React.CSSProperties,
+  modelAccuracy: {
+    fontSize: 16,
+    color: '#667eea',
+    fontWeight: 600,
+    textAlign: 'center',
+    marginBottom: 4,
+  } as React.CSSProperties,
+  processingTime: {
+    fontSize: 12,
+    color: '#a0aec0',
+    textAlign: 'center',
+  } as React.CSSProperties,
+  selectionIndicator: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#667eea',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  } as React.CSSProperties,
+  checkIcon: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  } as React.CSSProperties,
+  buttonContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0 20px 30px',
+  } as React.CSSProperties,
+  continueButton: {
+    backgroundColor: '#667eea',
+    padding: '16px 32px',
+    borderRadius: 25,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 8px rgba(102, 126, 234, 0.3)',
+    border: 'none',
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 600,
+    marginRight: 8,
+  } as React.CSSProperties,
+  buttonIcon: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  } as React.CSSProperties,
+};

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { AnimatePresence } from 'framer-motion';
+import { ConnectionProvider } from './src/contexts/ConnectionContext';
 import { ModelSelectionScreen } from './src/screens/ModelSelectionScreen';
 import { TextInputScreen } from './src/screens/TextInputScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
@@ -76,12 +77,14 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <AnimatePresence mode="wait">
-        {renderScreen()}
-      </AnimatePresence>
-      <StatusBar style="auto" />
-    </View>
+    <ConnectionProvider>
+      <View style={styles.container}>
+        <AnimatePresence mode="wait">
+          {renderScreen()}
+        </AnimatePresence>
+        <StatusBar style="auto" />
+      </View>
+    </ConnectionProvider>
   );
 }
 
