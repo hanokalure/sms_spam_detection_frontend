@@ -38,13 +38,13 @@ class ApiService {
       // Map FastAPI response format to frontend format
       const processing_time = request.model === 'svm' 
         ? 50 
-        : request.model === 'catboost' 
-          ? 120 
-          : request.model === 'dl_cnn' 
+        : request.model === 'xgboost' 
+          ? 85 
+          : request.model === 'distilbert_v2' 
             ? 150 
-            : request.model === 'dl_bilstm' 
-              ? 160 
-              : 120;
+            : request.model === 'roberta' 
+              ? 200 
+              : 100;
 
       const result = {
         prediction: data.prediction.toLowerCase() as 'spam' | 'ham', // Convert SPAM/HAM to spam/ham
@@ -147,13 +147,13 @@ class ApiService {
 
       const processing_time = request.model === 'svm' 
         ? 50 
-        : request.model === 'catboost' 
-          ? 120 
-          : request.model === 'dl_cnn' 
+        : request.model === 'xgboost' 
+          ? 85 
+          : request.model === 'distilbert_v2' 
             ? 150 
-            : request.model === 'dl_bilstm' 
-              ? 160 
-              : 120;
+            : request.model === 'roberta' 
+              ? 200 
+              : 100;
 
       return {
       prediction: isSpam ? 'spam' : 'ham',

@@ -111,10 +111,12 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
   };
 
   const getProcessingTimeForModel = (modelName: string): number => {
-    if (modelName.includes('SVM')) return 45;
-    if (modelName.includes('CatBoost')) return 85;
-    if (modelName.includes('CNN')) return 150;
-    if (modelName.includes('BiLSTM')) return 200;
+    // Processing times for actually available models
+    if (modelName.includes('SVM') || modelName.includes('Support Vector')) return 45;
+    if (modelName.includes('XGBoost') || modelName.includes('High-Accuracy')) return 85;
+    if (modelName.includes('DistilBERT') || modelName.includes('Deep Classifier')) return 150;
+    if (modelName.includes('RoBERTa') || modelName.includes('Ultimate')) return 200;
+    // Fallback for any other models
     return 100;
   };
 
@@ -132,7 +134,7 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
     return (
       <div style={styles.loadingContainer}>
         <SpamLoadingSpinner 
-          message={isChecking ? "Connecting to server..." : "Loading AI models..."} 
+          message={isChecking ? "Connecting to server..." : "Loading available models..."} 
           size="large" 
         />
       </div>
@@ -215,7 +217,7 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
             transition={{ duration: 0.6, delay: 0.2 }}
             style={{ ...styles.subtitle, fontSize: isDesktop ? 18 : 16 }}
           >
-            Choose from 4 advanced models for real-time spam detection
+            Choose from {models.length > 0 ? models.length : ''} advanced {models.length === 1 ? 'model' : 'models'} for real-time spam detection
           </motion.p>
         </div>
         
