@@ -1,4 +1,4 @@
-import { PredictionRequest, PredictionResult, ApiResponse } from '../types';
+import { PredictionRequest, PredictionResult, ApiResponse, MultiModelPredictionResult, ModelPredictionResult } from '../types';
 
 class ApiService {
   private baseUrl: string;
@@ -64,6 +64,60 @@ class ApiService {
       
       // Don't return mock data, let the error bubble up so we can see what's wrong
       throw error;
+    }
+  }
+
+  async predictWithAllModels(text: string): Promise<MultiModelPredictionResult> {
+    const startTime = Date.now();
+    
+    // Available models with their info
+    const availableModels = [
+      { id: 'svm', name: 'SVM (Support Vector Machine)', accuracy: 87 },
+      { id: 'xgboost', name: 'XGBoost High-Accuracy', accuracy: 98 },
+      { id: 'distilbert_v2', name: 'DistilBERT Deep Classifier', accuracy: 95 },
+      { id: 'roberta', name: 'RoBERTa Ultimate Detector', accuracy: 96 }
+    ];
+
+    try {
+      // Call all models simultaneously
+      const promises = availableModels.map(async (model) => {
+        try {
+          const result = await this.predict({ text, model: model.id });
+          const modelResult: ModelPredictionResult = {
+            modelId: model.id,
+            modelName: model.name,
+            modelAccuracy: model.accuracy,
+            prediction: result.prediction,
+            confidence: result.confidence,
+            processing_time: result.processing_time
+          };
+          return modelResult;
+        } catch (error) {
+          console.error(`Error with model ${model.id}:`, error);
+          // Return a fallback result if individual model fails
+          return {
+            modelId: model.id,
+            modelName: model.name,
+            modelAccuracy: model.accuracy,
+            prediction: 'ham' as 'spam' | 'ham',
+            confidence: 0,
+            processing_time: 0
+          };
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const endTime = Date.now();
+
+      return {
+        inputText: text,
+        results,
+        totalProcessingTime: endTime - startTime,
+        timestamp: Date.now()
+      };
+    } catch (error) {
+      console.error('❌ Multi-model prediction error:', error);
+      throw new Error('Failed to analyze text with all models');
     }
   }
 

@@ -29,6 +29,22 @@ export interface PredictionResult {
   processing_time?: number;
 }
 
+export interface ModelPredictionResult {
+  modelId: string;
+  modelName: string;
+  modelAccuracy: number;
+  prediction: 'spam' | 'ham';
+  confidence: number;
+  processing_time?: number;
+}
+
+export interface MultiModelPredictionResult {
+  inputText: string;
+  results: ModelPredictionResult[];
+  totalProcessingTime: number;
+  timestamp: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
