@@ -5,7 +5,11 @@ class ApiService {
 
   constructor() {
     // Use environment variable for backend URL, fallback to localhost for development
-    this.baseUrl = process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    // Expo uses EXPO_PUBLIC_ prefix
+    this.baseUrl = process.env.EXPO_PUBLIC_API_URL || 
+                   process.env.NEXT_PUBLIC_API_URL || 
+                   process.env.REACT_APP_API_URL || 
+                   'http://localhost:8000';
     console.log('🔧 API Service initialized with baseUrl:', this.baseUrl);
   }
 
