@@ -4,13 +4,25 @@ class ApiService {
   private baseUrl: string;
 
   constructor() {
-    // Use environment variable for backend URL, fallback to localhost for development
-    // Expo uses EXPO_PUBLIC_ prefix
-    this.baseUrl = process.env.EXPO_PUBLIC_API_URL || 
-                   process.env.NEXT_PUBLIC_API_URL || 
-                   process.env.REACT_APP_API_URL || 
-                   'http://localhost:8000';
+    // For web deployment, environment variables work differently
+    // Priority: window.ENV (injected by build) > process.env > hardcoded fallback
+    const windowEnv = typeof window !== 'undefined' ? (window as any).ENV : {};
+    
+    this.baseUrl = 
+      windowEnv?.API_URL ||
+      process.env.EXPO_PUBLIC_API_URL || 
+      process.env.NEXT_PUBLIC_API_URL || 
+      process.env.REACT_APP_API_URL ||
+      // Production fallback - your Hugging Face backend
+      'https://hanokalure-sms-spam-detector.hf.space';
+    
     console.log('🔧 API Service initialized with baseUrl:', this.baseUrl);
+    console.log('🌍 Environment:', {
+      windowEnv: windowEnv?.API_URL,
+      EXPO_PUBLIC: process.env.EXPO_PUBLIC_API_URL,
+      NEXT_PUBLIC: process.env.NEXT_PUBLIC_API_URL,
+      REACT_APP: process.env.REACT_APP_API_URL
+    });
   }
 
   setBaseUrl(url: string): void {
